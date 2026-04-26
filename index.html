@@ -5,30 +5,15 @@
 <title>Paintball Repair System</title>
 
 <style>
-body {
-  background:#0a0f14;
-  color:white;
-  font-family:Arial;
-  padding:20px;
-}
-button {
-  padding:12px;
-  margin:5px;
-  background:#1e2a36;
-  color:white;
-  border:none;
-  border-radius:5px;
-}
-#out {
-  margin-top:20px;
-  padding:15px;
-  background:#111;
-  border-radius:5px;
-}
+body { background:#0a0f14; color:white; font-family:Arial; padding:20px; }
+button { padding:12px; margin:5px; background:#1e2a36; color:white; border:none; border-radius:6px; }
+#out { margin-top:20px; padding:15px; background:#111; border-radius:6px; }
+table { width:100%; margin-top:10px; border-collapse:collapse; }
+td, th { border:1px solid #333; padding:6px; text-align:left; }
+h3 { margin-bottom:5px; }
 </style>
 
 </head>
-
 <body>
 
 <h2>🔧 Paintball Repair System</h2>
@@ -41,10 +26,11 @@ button {
 <br><br>
 
 <b>Select Issue:</b><br>
-<button onclick="diagnose('leak')">Leak</button>
+<button onclick="startLeak()">Leak</button>
 <button onclick="diagnose('nofire')">Won't Fire</button>
 <button onclick="diagnose('velocity')">Velocity</button>
 <button onclick="diagnose('dropoff')">Drop-off</button>
+<button onclick="showDB()">O-Ring Database</button>
 
 <div id="out"></div>
 
@@ -52,10 +38,98 @@ button {
 
 let marker = "";
 
+// ==========================
+// O-RING DATABASE
+// ==========================
+
+const DB = {
+Ion: [
+["Bolt Tip","015","1","Front bolt","Main seal"],
+["Bolt Sail","014","1","Middle bolt","Air movement"],
+["Bolt Rear","014","1","Rear bolt","Stability"],
+["Reg Seat","Custom","1","Regulator","Pressure seal"]
+],
+
+"Ego 10": [
+["Bolt Guide","016","1","Rear guide","Barrel seal"],
+["Rammer Front","011","2","Front rammer","Air control"],
+["Rammer Mid","010","2","Mid rammer","Cycle"],
+["Rammer Rear","011","2","Rear rammer","Return seal"],
+["LPR Seal","Custom","1","LPR","Pressure control"]
+],
+
+SFT: [
+["Fire Chamber Front","17/70","1","Front chamber","Primary seal"],
+["Fire Chamber Rear","17/90","1","Rear chamber","Primary seal"],
+["Bolt Sleeve","015","2","Bolt sleeve","Air seal"]
+]
+};
+
+// ==========================
+// MARKER SELECT
+// ==========================
+
 function setMarker(m){
   marker = m;
-  document.getElementById("out").innerHTML = "Marker: " + m;
+  document.getElementById("out").innerHTML = "<b>Marker:</b> " + m;
 }
+
+// ==========================
+// LEAK FLOW (NEW)
+// ==========================
+
+function startLeak(){
+  if(!marker){
+    alert("Select marker first");
+    return;
+  }
+
+  document.getElementById("out").innerHTML = `
+  <h3>Where is the leak?</h3>
+  <button onclick="leak('barrel')">Barrel</button>
+  <button onclick="leak('reg')">Reg / ASA</button>
+  <button onclick="leak('internal')">Inside marker</button>
+  `;
+}
+
+function leak(location){
+
+  let result = "<h3>" + marker + " Leak</h3>";
+
+  if(location === "barrel"){
+
+    result += "<b>Fix:</b><br>";
+
+    if(marker === "Ion"){
+      result += "• Replace 015 (bolt tip)<br>• Replace 014 (bolt sail)";
+      result += drawIon();
+    }
+
+    if(marker === "Ego 10"){
+      result += "• Replace 016 (bolt guide)";
+      result += drawEgo();
+    }
+
+    if(marker === "SFT"){
+      result += "• Replace 17/70 + 17/90";
+      result += drawSFT();
+    }
+  }
+
+  if(location === "reg"){
+    result += "Likely regulator seal / reg seat";
+  }
+
+  if(location === "internal"){
+    result += "Likely rammer / solenoid / internal seals";
+  }
+
+  document.getElementById("out").innerHTML = result;
+}
+
+// ==========================
+// OTHER ISSUES
+// ==========================
 
 function diagnose(issue){
 
@@ -66,32 +140,12 @@ function diagnose(issue){
 
   let result = "<h3>" + marker + "</h3>";
 
-  if(issue === "leak"){
-
-    result += "<b>Leak Diagnosis</b><br>";
-
-    if(marker === "Ion"){
-      result += "Replace:<br>• 015 (bolt tip)<br>• 014 (bolt sail)";
-      result += drawIon();
-    }
-
-    if(marker === "Ego 10"){
-      result += "Replace:<br>• 016 (bolt guide)";
-      result += drawEgo();
-    }
-
-    if(marker === "SFT"){
-      result += "Replace:<br>• 17/70 (front)<br>• 17/90 (rear)";
-      result += drawSFT();
-    }
-  }
-
   if(issue === "nofire"){
-    result += "Check:<br>• Battery<br>• Wiring<br>• Solenoid click";
+    result += "Check:<br>• Battery<br>• Wiring<br>• Solenoid";
   }
 
   if(issue === "velocity"){
-    result += "Check:<br>• Pressure<br>• Regulator<br>• O-rings";
+    result += "Check:<br>• Pressure<br>• Regulator<br>• Seals";
   }
 
   if(issue === "dropoff"){
@@ -101,6 +155,37 @@ function diagnose(issue){
   document.getElementById("out").innerHTML = result;
 }
 
+// ==========================
+// DATABASE VIEW
+// ==========================
+
+function showDB(){
+
+  if(!marker){
+    alert("Select marker first");
+    return;
+  }
+
+  let data = DB[marker];
+
+  let html = "<h3>O-Ring Database (" + marker + ")</h3>";
+  html += "<table><tr><th>Name</th><th>Size</th><th>Qty</th><th>Location</th><th>Function</th></tr>";
+
+  data.forEach(row=>{
+    html += "<tr>";
+    row.forEach(col=> html += "<td>" + col + "</td>");
+    html += "</tr>";
+  });
+
+  html += "</table>";
+
+  document.getElementById("out").innerHTML = html;
+}
+
+// ==========================
+// DIAGRAMS
+// ==========================
+
 function drawIon(){
 return `
 <svg width="300" height="100">
@@ -109,8 +194,7 @@ return `
 <circle cx="200" cy="50" r="8" fill="blue"/>
 <text x="10" y="20">015 Tip</text>
 <text x="170" y="20">014 Sail</text>
-</svg>
-`;
+</svg>`;
 }
 
 function drawEgo(){
@@ -119,8 +203,7 @@ return `
 <rect x="10" y="40" width="280" height="20" fill="gray"/>
 <circle cx="150" cy="50" r="8" fill="yellow"/>
 <text x="120" y="20">016 Guide</text>
-</svg>
-`;
+</svg>`;
 }
 
 function drawSFT(){
@@ -131,8 +214,7 @@ return `
 <circle cx="220" cy="50" r="8" fill="green"/>
 <text x="60" y="20">17/70</text>
 <text x="200" y="20">17/90</text>
-</svg>
-`;
+</svg>`;
 }
 
 </script>
