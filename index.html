@@ -5,40 +5,18 @@
 <title>Paintball Repair System</title>
 
 <style>
-body {
-  background:#0a0f14;
-  color:white;
-  font-family:Arial;
-  padding:20px;
-}
-
-button {
-  padding:12px;
-  margin:5px;
-  background:#1e2a36;
-  color:white;
-  border:none;
-  border-radius:6px;
-}
-
-#out {
-  margin-top:20px;
-  padding:15px;
-  background:#111;
-  border-radius:6px;
-}
-
-table {
-  width:100%;
-  margin-top:10px;
-  border-collapse:collapse;
-}
-
-td, th {
-  border:1px solid #333;
-  padding:6px;
-}
-
+body { background:#0a0f14; color:#fff; font-family:Arial; padding:16px; }
+h2 { margin-top:0; }
+button { padding:10px 12px; margin:5px 4px; background:#1e2a36; color:#fff; border:none; border-radius:8px; }
+#out { margin-top:14px; padding:12px; background:#111; border-radius:10px; }
+.badge { display:inline-block; background:#223446; padding:3px 6px; border-radius:6px; margin-left:6px; }
+table { width:100%; margin-top:10px; border-collapse:collapse; }
+td, th { border:1px solid #333; padding:6px; }
+.note { color:#9fb3c8; font-size:12px; }
+svg { width:100%; height:auto; }
+.part { cursor:pointer; }
+.part:hover { opacity:0.85; }
+.hl { stroke:#fff; stroke-width:2; }
 </style>
 </head>
 
@@ -53,15 +31,15 @@ td, th {
 
 <br><br>
 
-<b>Select Issue:</b><br>
+<b>Tools:</b><br>
 <button onclick="startLeak()">Leak</button>
 <button onclick="diagnose('nofire')">Won't Fire</button>
 <button onclick="diagnose('velocity')">Velocity</button>
 <button onclick="diagnose('dropoff')">Drop-off</button>
-<button onclick="showDB()">O-Ring Database</button>
+<button onclick="showDB()">O-Ring DB</button>
 <button onclick="startRebuildSteps()">Guided Rebuild</button>
 
-<div id="out"></div>
+<div id="out">Select a marker to begin.</div>
 
 <script>
 
@@ -70,202 +48,178 @@ let stepIndex = 0;
 let steps = [];
 
 // ==========================
-// O-RING DATABASE
+// EXPANDED O-RING DB
 // ==========================
-
 const DB = {
 Ion: [
 ["Bolt Tip","015","1","Front bolt","Main seal"],
-["Bolt Sail","014","1","Middle bolt","Air movement"],
+["Bolt Sail","014","1","Mid bolt","Air movement"],
 ["Bolt Rear","014","1","Rear bolt","Stability"],
-["Reg Seat","Custom","1","Regulator","Pressure seal"]
+["Reg Seat","Custom","1","Inline reg","Pressure seal"],
+["Reg Piston","015","1","Inline reg","Consistency"],
+["ASA","015","1","ASA","Air seal"]
 ],
-
 "Ego 10": [
 ["Bolt Guide","016","1","Rear guide","Barrel seal"],
 ["Rammer Front","011","2","Front rammer","Air control"],
 ["Rammer Mid","010","2","Mid rammer","Cycle"],
-["Rammer Rear","011","2","Rear rammer","Return seal"],
-["LPR Seal","Custom","1","LPR","Pressure control"]
+["Rammer Rear","011","2","Rear rammer","Return"],
+["LPR Seal","Custom","1","LPR","Pressure control"],
+["Inline Reg","015","1","HPR","Consistency"]
 ],
-
 SFT: [
 ["Fire Chamber Front","17/70","1","Front chamber","Primary seal"],
 ["Fire Chamber Rear","17/90","1","Rear chamber","Primary seal"],
-["Bolt Sleeve","015","2","Bolt sleeve","Air seal"]
+["Bolt Sleeve","015","2","Bolt sleeve","Air seal"],
+["ASA","015","1","ASA","Air seal"]
 ]
 };
 
 // ==========================
 // MARKER SELECT
 // ==========================
-
 function setMarker(m){
   marker = m;
-  document.getElementById("out").innerHTML = "<b>Marker:</b> " + m;
+  document.getElementById("out").innerHTML =
+    "<b>Marker:</b> "+m+
+    "<div class='note'>Tip: tap Leak to locate the exact failing seal.</div>";
 }
 
 // ==========================
-// LEAK FLOW
+// LEAK FLOW (BRANCHING)
 // ==========================
-
 function startLeak(){
-  if(!marker){
-    alert("Select marker first");
-    return;
-  }
-
+  if(!marker){ alert("Select marker first"); return; }
   document.getElementById("out").innerHTML = `
-  <h3>Where is the leak?</h3>
-  <button onclick="leak('barrel')">Barrel</button>
-  <button onclick="leak('reg')">Reg / ASA</button>
-  <button onclick="leak('internal')">Inside marker</button>
+    <h3>${marker} → Leak</h3>
+    <b>Where is the leak?</b><br>
+    <button onclick="leak('barrel')">Barrel</button>
+    <button onclick="leak('reg')">Reg / ASA</button>
+    <button onclick="leak('internal')">Inside marker</button>
   `;
 }
 
-function leak(location){
+function leak(loc){
+  let html = `<h3>${marker} → ${loc}</h3><b>Fix:</b><br>`;
 
-  let result = "<h3>" + marker + " Leak</h3>";
-
-  if(location === "barrel"){
-
-    result += "<b>Fix:</b><br>";
-
-    if(marker === "Ion"){
-      result += "• 015 (bolt tip)<br>• 014 (bolt sail)";
-      result += drawIon();
+  if(loc==="barrel"){
+    if(marker==="Ion"){
+      html += "• 015 (bolt tip) • 014 (bolt sail)";
+      html += drawIon(true);
     }
-
-    if(marker === "Ego 10"){
-      result += "• 016 (bolt guide)";
-      result += drawEgo();
+    if(marker==="Ego 10"){
+      html += "• 016 (bolt guide)";
+      html += drawEgo(true);
     }
-
-    if(marker === "SFT"){
-      result += "• 17/70 + 17/90";
-      result += drawSFT();
+    if(marker==="SFT"){
+      html += "• 17/70 + 17/90";
+      html += drawSFT(true);
     }
   }
 
-  if(location === "reg"){
-    result += "Likely regulator issue / reg seat";
+  if(loc==="reg"){
+    html += "• Reg seat / piston O-rings";
+    html += "<div class='note'>Check for hiss at ASA/HPR, replace reg seat.</div>";
   }
 
-  if(location === "internal"){
-    result += "Likely rammer / solenoid seals";
+  if(loc==="internal"){
+    html += "• Rammer / solenoid seals";
+    html += "<div class='note'>Leak that changes while firing = dynamic seal.</div>";
   }
 
-  document.getElementById("out").innerHTML = result;
+  html += `<br><button onclick="advanced()">Still not fixed</button>`;
+  document.getElementById("out").innerHTML = html;
+}
+
+function advanced(){
+  document.getElementById("out").innerHTML = `
+    <h3>Advanced Checks</h3>
+    • Air path blockage<br>
+    • Solenoid not cycling<br>
+    • Debris on seals<br>
+    • Regulator instability<br>
+    <div class="note">Tip: if leak stops when firing → dynamic seal; constant → static seal.</div>
+  `;
 }
 
 // ==========================
 // OTHER ISSUES
 // ==========================
-
 function diagnose(issue){
+  if(!marker){ alert("Select marker first"); return; }
+  let html = `<h3>${marker}</h3>`;
 
-  if(!marker){
-    alert("Select marker first");
-    return;
+  if(issue==="nofire"){
+    html += "• Fresh battery<br>• Eyes clean<br>• Trigger switch<br>• Listen for solenoid click";
+  }
+  if(issue==="velocity"){
+    html += "• Set baseline pressure<br>• Clean regulator<br>• Replace reg seat / seals";
+  }
+  if(issue==="dropoff"){
+    html += "• Grease dynamic seals<br>• Check LPR/HPR<br>• Replace worn O-rings";
   }
 
-  let result = "<h3>" + marker + "</h3>";
-
-  if(issue === "nofire"){
-    result += "Check:<br>• Battery<br>• Wiring<br>• Solenoid";
-  }
-
-  if(issue === "velocity"){
-    result += "Check:<br>• Pressure<br>• Regulator<br>• Seals";
-  }
-
-  if(issue === "dropoff"){
-    result += "Likely:<br>• Dry seals<br>• Reg issue<br>• Worn O-rings";
-  }
-
-  document.getElementById("out").innerHTML = result;
-}
-
-// ==========================
-// O-RING DATABASE DISPLAY
-// ==========================
-
-function showDB(){
-
-  if(!marker){
-    alert("Select marker first");
-    return;
-  }
-
-  let data = DB[marker];
-
-  let html = "<h3>O-Ring Database (" + marker + ")</h3>";
-  html += "<table><tr><th>Name</th><th>Size</th><th>Qty</th><th>Location</th><th>Function</th></tr>";
-
-  data.forEach(row=>{
-    html += "<tr>";
-    row.forEach(col=> html += "<td>" + col + "</td>");
-    html += "</tr>";
-  });
-
-  html += "</table>";
-
+  html += `<br><button onclick="advanced()">Still not fixed</button>`;
   document.getElementById("out").innerHTML = html;
 }
 
 // ==========================
-// GUIDED REBUILD SYSTEM
+// O-RING DB VIEW
 // ==========================
+function showDB(){
+  if(!marker){ alert("Select marker first"); return; }
+  let rows = DB[marker];
+  let html = `<h3>O-Ring DB (${marker})</h3>
+  <table><tr><th>Name</th><th>Size</th><th>Qty</th><th>Location</th><th>Function</th></tr>`;
+  rows.forEach(r=>{
+    html += "<tr>"+r.map(c=>`<td>${c}</td>`).join("")+"</tr>";
+  });
+  html += "</table><div class='note'>Tap Leak for fastest diagnosis.</div>";
+  document.getElementById("out").innerHTML = html;
+}
 
+// ==========================
+// GUIDED REBUILD (WITH STEP VISUALS)
+// ==========================
 function startRebuildSteps(){
-
-  if(!marker){
-    alert("Select marker first");
-    return;
-  }
-
+  if(!marker){ alert("Select marker first"); return; }
   stepIndex = 0;
 
-  if(marker === "Ion"){
+  if(marker==="Ion"){
     steps = [
-      "Degas marker",
-      "Remove body shell",
-      "Remove bolt assembly",
-      "Replace 015 (tip) O-ring",
-      "Replace 014 (sail) O-ring",
-      "Lightly grease all O-rings",
-      "Reassemble marker",
-      "Gas up slowly",
-      "Test firing"
+      ["Degas marker", drawIon()],
+      ["Remove body shell", drawIon()],
+      ["Remove bolt assembly", drawIon(true)],
+      ["Replace 015 (tip) + 014 (sail)", drawIon(true)],
+      ["Light grease O-rings", drawIon()],
+      ["Reassemble", drawIon()],
+      ["Gas up slowly", ""],
+      ["Test firing", ""]
     ];
   }
 
-  if(marker === "Ego 10"){
+  if(marker==="Ego 10"){
     steps = [
-      "Degas marker",
-      "Remove bolt (back cap)",
-      "Remove rammer",
-      "Replace 016 bolt guide O-ring",
-      "Replace rammer O-rings",
-      "Light grease seals",
-      "Clean LPR",
-      "Reassemble marker",
-      "Gas up slowly",
-      "Test firing"
+      ["Degas marker", drawEgo()],
+      ["Remove bolt (back cap)", drawEgo()],
+      ["Remove rammer", drawEgo(true)],
+      ["Replace 016 guide + rammer O-rings", drawEgo(true)],
+      ["Light grease + clean LPR", ""],
+      ["Reassemble", ""],
+      ["Gas up slowly", ""],
+      ["Test firing", ""]
     ];
   }
 
-  if(marker === "SFT"){
+  if(marker==="SFT"){
     steps = [
-      "Degas marker",
-      "Remove bolt assembly",
-      "Remove fire chamber",
-      "Replace 17/70 O-ring",
-      "Replace 17/90 O-ring",
-      "Grease all seals properly",
-      "Reassemble marker",
-      "Gas up slowly",
-      "Test firing"
+      ["Degas marker", drawSFT()],
+      ["Remove bolt + fire chamber", drawSFT(true)],
+      ["Replace 17/70 + 17/90", drawSFT(true)],
+      ["Grease properly", ""],
+      ["Reassemble", ""],
+      ["Gas up slowly", ""],
+      ["Test firing", ""]
     ];
   }
 
@@ -273,58 +227,64 @@ function startRebuildSteps(){
 }
 
 function showStep(){
+  const [text, img] = steps[stepIndex];
   document.getElementById("out").innerHTML =
-    "<h3>Step " + (stepIndex+1) + "</h3>" +
-    steps[stepIndex] +
-    "<br><br>" +
-    "<button onclick='nextStep()'>Next</button>";
+    `<h3>Step ${stepIndex+1}</h3>${text}<br>${img||""}
+     <br><button onclick="nextStep()">Next</button>`;
 }
 
 function nextStep(){
   stepIndex++;
-
-  if(stepIndex >= steps.length){
+  if(stepIndex>=steps.length){
     document.getElementById("out").innerHTML =
-      "<h3>✅ Rebuild Complete</h3>Test marker and check for issues.";
+      "<h3>✅ Rebuild Complete</h3>Test marker and re-check for leaks/consistency.";
     return;
   }
-
   showStep();
 }
 
 // ==========================
-// DIAGRAMS
+// CLICKABLE DIAGRAMS
 // ==========================
-
-function drawIon(){
-return `
-<svg width="300" height="100">
-<rect x="10" y="40" width="280" height="20" fill="gray"/>
-<circle cx="40" cy="50" r="8" fill="red"/>
-<circle cx="200" cy="50" r="8" fill="blue"/>
-<text x="10" y="20">015 Tip</text>
-<text x="170" y="20">014 Sail</text>
-</svg>`;
+function drawIon(highlight=false){
+  return `
+  <svg viewBox="0 0 320 100">
+    <rect x="10" y="40" width="300" height="20" fill="#888"/>
+    <circle class="part ${highlight?'hl':''}" cx="50" cy="50" r="9" fill="#ff5252"
+      onclick="partInfo('Ion','Bolt Tip 015 x1')"/>
+    <circle class="part ${highlight?'hl':''}" cx="230" cy="50" r="9" fill="#40c4ff"
+      onclick="partInfo('Ion','Bolt Sail 014 x1')"/>
+    <text x="20" y="20">Tip 015</text>
+    <text x="200" y="20">Sail 014</text>
+  </svg>`;
 }
 
-function drawEgo(){
-return `
-<svg width="300" height="100">
-<rect x="10" y="40" width="280" height="20" fill="gray"/>
-<circle cx="150" cy="50" r="8" fill="yellow"/>
-<text x="120" y="20">016 Guide</text>
-</svg>`;
+function drawEgo(highlight=false){
+  return `
+  <svg viewBox="0 0 320 100">
+    <rect x="10" y="40" width="300" height="20" fill="#888"/>
+    <circle class="part ${highlight?'hl':''}" cx="160" cy="50" r="9" fill="#ffd740"
+      onclick="partInfo('Ego 10','Bolt Guide 016 x1')"/>
+    <text x="130" y="20">Guide 016</text>
+  </svg>`;
 }
 
-function drawSFT(){
-return `
-<svg width="300" height="100">
-<rect x="10" y="40" width="280" height="20" fill="gray"/>
-<circle cx="80" cy="50" r="8" fill="orange"/>
-<circle cx="220" cy="50" r="8" fill="green"/>
-<text x="60" y="20">17/70</text>
-<text x="200" y="20">17/90</text>
-</svg>`;
+function drawSFT(highlight=false){
+  return `
+  <svg viewBox="0 0 320 100">
+    <rect x="10" y="40" width="300" height="20" fill="#888"/>
+    <circle class="part ${highlight?'hl':''}" cx="90" cy="50" r="9" fill="#ffab40"
+      onclick="partInfo('SFT','17/70 front x1')"/>
+    <circle class="part ${highlight?'hl':''}" cx="240" cy="50" r="9" fill="#69f0ae"
+      onclick="partInfo('SFT','17/90 rear x1')"/>
+    <text x="70" y="20">17/70</text>
+    <text x="215" y="20">17/90</text>
+  </svg>`;
+}
+
+function partInfo(m, text){
+  document.getElementById("out").innerHTML =
+    `<h3>${m} Part</h3><b>${text}</b><div class="note">Tap Leak for context-specific fixes.</div>`;
 }
 
 </script>
