@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paintball Repair System</title>
+</head>
 
+<body style="background:black;color:white;font-family:Arial;padding:20px;">
+
+<h2>🔧 Paintball Repair System</h2>
+
+<b>Select Marker:</b><br>
+<button onclick="setMarker('Ion')">Ion</button>
+<button onclick="setMarker('Ego 10')">Ego 10</button>
+<button onclick="setMarker('SFT')">SFT</button>
+
+<br><br>
+
+<b>Select Issue:</b><br>
+<button onclick="diagnose('leak')">Leak</button>
+<button onclick="diagnose('nofire')">Won't Fire</button>
+<button onclick="diagnose('velocity')">Velocity</button>
+
+<div id="out" style="margin-top:20px;"></div>
+
+<script>
+let marker = "";
+
+function setMarker(m){
+  marker = m;
+  document.getElementById("out").innerHTML = "Marker: " + m;
+}
+
+function diagnose(issue){
+  if(!marker){
+    alert("Select marker first");
+    return;
+  }
+
+  let result = "<h3>" + marker + "</h3>";
+
+  if(issue === "leak"){
+    if(marker === "Ion"){
+      result += "Replace: 015 (tip), 014 (sail)";
+    }
+    if(marker === "Ego 10"){
+      result += "Replace: 016 bolt guide";
+    }
+    if(marker === "SFT"){
+      result += "Replace: 17/70 + 17/90";
+    }
+  }
+
+  if(issue === "nofire"){
+    result += "<br>Check battery → wiring → solenoid";
+  }
+
+  if(issue === "velocity"){
+    result += "<br>Check pressure → clean reg → replace seals";
+  }
+
+  document.getElementById("out").innerHTML = result;
+}
+</script>
+
+</body>
+</html>
