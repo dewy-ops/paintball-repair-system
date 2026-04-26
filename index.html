@@ -3,9 +3,33 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paintball Repair System</title>
+
+<style>
+body {
+  background:#0a0f14;
+  color:white;
+  font-family:Arial;
+  padding:20px;
+}
+button {
+  padding:12px;
+  margin:5px;
+  background:#1e2a36;
+  color:white;
+  border:none;
+  border-radius:5px;
+}
+#out {
+  margin-top:20px;
+  padding:15px;
+  background:#111;
+  border-radius:5px;
+}
+</style>
+
 </head>
 
-<body style="background:black;color:white;font-family:Arial;padding:20px;">
+<body>
 
 <h2>🔧 Paintball Repair System</h2>
 
@@ -20,10 +44,12 @@
 <button onclick="diagnose('leak')">Leak</button>
 <button onclick="diagnose('nofire')">Won't Fire</button>
 <button onclick="diagnose('velocity')">Velocity</button>
+<button onclick="diagnose('dropoff')">Drop-off</button>
 
-<div id="out" style="margin-top:20px;"></div>
+<div id="out"></div>
 
 <script>
+
 let marker = "";
 
 function setMarker(m){
@@ -32,6 +58,7 @@ function setMarker(m){
 }
 
 function diagnose(issue){
+
   if(!marker){
     alert("Select marker first");
     return;
@@ -40,27 +67,74 @@ function diagnose(issue){
   let result = "<h3>" + marker + "</h3>";
 
   if(issue === "leak"){
+
+    result += "<b>Leak Diagnosis</b><br>";
+
     if(marker === "Ion"){
-      result += "Replace: 015 (tip), 014 (sail)";
+      result += "Replace:<br>• 015 (bolt tip)<br>• 014 (bolt sail)";
+      result += drawIon();
     }
+
     if(marker === "Ego 10"){
-      result += "Replace: 016 bolt guide";
+      result += "Replace:<br>• 016 (bolt guide)";
+      result += drawEgo();
     }
+
     if(marker === "SFT"){
-      result += "Replace: 17/70 + 17/90";
+      result += "Replace:<br>• 17/70 (front)<br>• 17/90 (rear)";
+      result += drawSFT();
     }
   }
 
   if(issue === "nofire"){
-    result += "<br>Check battery → wiring → solenoid";
+    result += "Check:<br>• Battery<br>• Wiring<br>• Solenoid click";
   }
 
   if(issue === "velocity"){
-    result += "<br>Check pressure → clean reg → replace seals";
+    result += "Check:<br>• Pressure<br>• Regulator<br>• O-rings";
+  }
+
+  if(issue === "dropoff"){
+    result += "Likely:<br>• Dry seals<br>• Reg issue<br>• Worn O-rings";
   }
 
   document.getElementById("out").innerHTML = result;
 }
+
+function drawIon(){
+return `
+<svg width="300" height="100">
+<rect x="10" y="40" width="280" height="20" fill="gray"/>
+<circle cx="40" cy="50" r="8" fill="red"/>
+<circle cx="200" cy="50" r="8" fill="blue"/>
+<text x="10" y="20">015 Tip</text>
+<text x="170" y="20">014 Sail</text>
+</svg>
+`;
+}
+
+function drawEgo(){
+return `
+<svg width="300" height="100">
+<rect x="10" y="40" width="280" height="20" fill="gray"/>
+<circle cx="150" cy="50" r="8" fill="yellow"/>
+<text x="120" y="20">016 Guide</text>
+</svg>
+`;
+}
+
+function drawSFT(){
+return `
+<svg width="300" height="100">
+<rect x="10" y="40" width="280" height="20" fill="gray"/>
+<circle cx="80" cy="50" r="8" fill="orange"/>
+<circle cx="220" cy="50" r="8" fill="green"/>
+<text x="60" y="20">17/70</text>
+<text x="200" y="20">17/90</text>
+</svg>
+`;
+}
+
 </script>
 
 </body>
