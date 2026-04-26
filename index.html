@@ -5,15 +5,43 @@
 <title>Paintball Repair System</title>
 
 <style>
-body { background:#0a0f14; color:white; font-family:Arial; padding:20px; }
-button { padding:12px; margin:5px; background:#1e2a36; color:white; border:none; border-radius:6px; }
-#out { margin-top:20px; padding:15px; background:#111; border-radius:6px; }
-table { width:100%; margin-top:10px; border-collapse:collapse; }
-td, th { border:1px solid #333; padding:6px; text-align:left; }
-h3 { margin-bottom:5px; }
-</style>
+body {
+  background:#0a0f14;
+  color:white;
+  font-family:Arial;
+  padding:20px;
+}
 
+button {
+  padding:12px;
+  margin:5px;
+  background:#1e2a36;
+  color:white;
+  border:none;
+  border-radius:6px;
+}
+
+#out {
+  margin-top:20px;
+  padding:15px;
+  background:#111;
+  border-radius:6px;
+}
+
+table {
+  width:100%;
+  margin-top:10px;
+  border-collapse:collapse;
+}
+
+td, th {
+  border:1px solid #333;
+  padding:6px;
+}
+
+</style>
 </head>
+
 <body>
 
 <h2>🔧 Paintball Repair System</h2>
@@ -31,12 +59,15 @@ h3 { margin-bottom:5px; }
 <button onclick="diagnose('velocity')">Velocity</button>
 <button onclick="diagnose('dropoff')">Drop-off</button>
 <button onclick="showDB()">O-Ring Database</button>
+<button onclick="startRebuildSteps()">Guided Rebuild</button>
 
 <div id="out"></div>
 
 <script>
 
 let marker = "";
+let stepIndex = 0;
+let steps = [];
 
 // ==========================
 // O-RING DATABASE
@@ -75,7 +106,7 @@ function setMarker(m){
 }
 
 // ==========================
-// LEAK FLOW (NEW)
+// LEAK FLOW
 // ==========================
 
 function startLeak(){
@@ -101,27 +132,27 @@ function leak(location){
     result += "<b>Fix:</b><br>";
 
     if(marker === "Ion"){
-      result += "• Replace 015 (bolt tip)<br>• Replace 014 (bolt sail)";
+      result += "• 015 (bolt tip)<br>• 014 (bolt sail)";
       result += drawIon();
     }
 
     if(marker === "Ego 10"){
-      result += "• Replace 016 (bolt guide)";
+      result += "• 016 (bolt guide)";
       result += drawEgo();
     }
 
     if(marker === "SFT"){
-      result += "• Replace 17/70 + 17/90";
+      result += "• 17/70 + 17/90";
       result += drawSFT();
     }
   }
 
   if(location === "reg"){
-    result += "Likely regulator seal / reg seat";
+    result += "Likely regulator issue / reg seat";
   }
 
   if(location === "internal"){
-    result += "Likely rammer / solenoid / internal seals";
+    result += "Likely rammer / solenoid seals";
   }
 
   document.getElementById("out").innerHTML = result;
@@ -156,7 +187,7 @@ function diagnose(issue){
 }
 
 // ==========================
-// DATABASE VIEW
+// O-RING DATABASE DISPLAY
 // ==========================
 
 function showDB(){
@@ -180,6 +211,85 @@ function showDB(){
   html += "</table>";
 
   document.getElementById("out").innerHTML = html;
+}
+
+// ==========================
+// GUIDED REBUILD SYSTEM
+// ==========================
+
+function startRebuildSteps(){
+
+  if(!marker){
+    alert("Select marker first");
+    return;
+  }
+
+  stepIndex = 0;
+
+  if(marker === "Ion"){
+    steps = [
+      "Degas marker",
+      "Remove body shell",
+      "Remove bolt assembly",
+      "Replace 015 (tip) O-ring",
+      "Replace 014 (sail) O-ring",
+      "Lightly grease all O-rings",
+      "Reassemble marker",
+      "Gas up slowly",
+      "Test firing"
+    ];
+  }
+
+  if(marker === "Ego 10"){
+    steps = [
+      "Degas marker",
+      "Remove bolt (back cap)",
+      "Remove rammer",
+      "Replace 016 bolt guide O-ring",
+      "Replace rammer O-rings",
+      "Light grease seals",
+      "Clean LPR",
+      "Reassemble marker",
+      "Gas up slowly",
+      "Test firing"
+    ];
+  }
+
+  if(marker === "SFT"){
+    steps = [
+      "Degas marker",
+      "Remove bolt assembly",
+      "Remove fire chamber",
+      "Replace 17/70 O-ring",
+      "Replace 17/90 O-ring",
+      "Grease all seals properly",
+      "Reassemble marker",
+      "Gas up slowly",
+      "Test firing"
+    ];
+  }
+
+  showStep();
+}
+
+function showStep(){
+  document.getElementById("out").innerHTML =
+    "<h3>Step " + (stepIndex+1) + "</h3>" +
+    steps[stepIndex] +
+    "<br><br>" +
+    "<button onclick='nextStep()'>Next</button>";
+}
+
+function nextStep(){
+  stepIndex++;
+
+  if(stepIndex >= steps.length){
+    document.getElementById("out").innerHTML =
+      "<h3>✅ Rebuild Complete</h3>Test marker and check for issues.";
+    return;
+  }
+
+  showStep();
 }
 
 // ==========================
